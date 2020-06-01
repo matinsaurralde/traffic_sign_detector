@@ -44,13 +44,11 @@ print("Cantidad de clases distintas: " + str(num_classes))
 #show_one_image(X_train, 2900)
 
 """se pueden ver las imagenes mejor con estas funciones que encontre en internet 
-
 n_train = len(X_train)
 select_random_images_by_classes(X_train, y_train, n_train)
 """
 
 """vemos algunas la distribucion del dataset
-
 num_classes, counts = np.unique(y_train, return_counts=True)
 distribution_chart(num_classes, counts, 'Classes', 'Training Examples')
 """

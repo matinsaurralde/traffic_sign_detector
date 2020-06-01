@@ -20,7 +20,7 @@ def show_one_image(images,index):
 
 def show_images(images, cols = 1, titles = None):
     """muestra imagenes
-    Buscar cols¿
+    Buscar cols???
 
     Arguments:
         images {[np.arrays]} -- [contiene las imagenes a mostrar]
@@ -84,6 +84,13 @@ def select_random_images_by_classes(features, labels, n_features):
         titles.append(str(labels[indexes[i]]))
 
     show_images(images, titles = titles)
+
+def distribution_chart(x, y, xlabel, ylabel):
+    plt.figure(figsize=(15,7))
+    plt.xlabel(xlabel, fontsize=16)
+    plt.ylabel(ylabel, fontsize=18)
+    plt.bar(x, y, 0.7, color='red')
+    plt.show()
 
 def distribution_chart(x, y, xlabel, ylabel):
     plt.figure(figsize=(15,7))
