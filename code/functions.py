@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+from sklearn.utils import shuffle
+import numpy as np
 
 
 def show_one_image(images,index):
@@ -12,7 +14,7 @@ def show_one_image(images,index):
     """
     if index > len(images):
         index = len(images)
-    fig = plt.figure(figsize=(3, 3))
+    fig = plt.figure(figsize=(2, 2))
     plt.imshow(images[index], cmap='gray')
     plt.show()
 
@@ -92,9 +94,19 @@ def distribution_chart(x, y, xlabel, ylabel):
     plt.bar(x, y, 0.7, color='red')
     plt.show()
 
-def distribution_chart(x, y, xlabel, ylabel):
-    plt.figure(figsize=(15,7))
-    plt.xlabel(xlabel, fontsize=16)
-    plt.ylabel(ylabel, fontsize=18)
-    plt.bar(x, y, 0.7, color='red')
-    plt.show()
+class Pre_Process ():
+    
+    def normalize_dataset (self, dataset):
+        normalized_dataset = (dataset -128.0)/128.0
+        return normalized_dataset
+            
+    def get_mean_dataset(self, dataset):
+        return np.mean(dataset)
+    
+    def shuffle_dataset(self,dataset,labels):
+        dataset_shuffle, labels_shuffle = shuffle(dataset, labels)
+        return dataset_shuffle, labels_shuffle
+    
+    def dataset2gray (self,dataset):
+        dataset_gray = np.sum(dataset/3, axis=3, keepdims=True)
+        return dataset_gray

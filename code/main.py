@@ -1,10 +1,12 @@
-from functions import select_random_images_by_classes, show_images, show_one_image, distribution_chart
+from functions import select_random_images_by_classes, show_images, show_one_image, distribution_chart, Pre_Process
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import random
 import sklearn
 import tensorflow as tf
+from tensorflow.keras.layers import Flatten
+
 
 
 training_file = '/Users/matinsaurralde/Documents/Beca Tarpuy/Ingenia/3er_nivel/traffic_sign/traffic-signs-data/train.p'
@@ -55,8 +57,33 @@ distribution_chart(num_classes, counts, 'Classes', 'Training Examples')
 
 #shuffleamos la data pq puede arruinar el train
 
+pre_process = Pre_Process ()
+normalized_dataset = pre_process.normalize_dataset(X_train)
+print(pre_process.get_mean_dataset(X_train))
+print(pre_process.get_mean_dataset(normalized_dataset))
+shufled = pre_process.shuffle_dataset(normalized_dataset,y_train)
+X_train_gray = pre_process.dataset2gray(X_train)
+X_valid_gray = pre_process.dataset2gray(X_valid)
+X_test_gray = pre_process.dataset2gray(X_test)
+print(pre_process.get_mean_dataset(X_train_gray))
+X_train_gray = pre_process.normalize_dataset(X_train_gray)
+X_valid_gray = pre_process.normalize_dataset(X_valid_gray)
+X_test_gray  = pre_process.normalize_dataset(X_test_gray)
+print(pre_process.get_mean_dataset(X_train_gray))
+shufled_gray = pre_process.shuffle_dataset(X_train_gray,y_train)
+print (shufled_gray[0][0].shape)
 
 
+for i in range(8):
+    idx = random.randint(0, len(X_train))
+
+    plt.figure(figsize=(1,1))
+    plt.imshow(X_train[idx], cmap="gray")
+    plt.show()
+    plt.figure(figsize=(1,1))
+    image = np.squeeze(X_train_gray[idx], axis=(2,))
+    plt.imshow(image, cmap="gray")
+    plt.show()
 
     
 
