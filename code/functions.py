@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import random
 from sklearn.utils import shuffle
 import numpy as np
+import tensorflow as tf
+
 
 
 def show_one_image(images,index):
@@ -110,3 +112,8 @@ class Pre_Process ():
     def dataset2gray (self,dataset):
         dataset_gray = np.sum(dataset/3, axis=3, keepdims=True)
         return dataset_gray
+
+
+
+
+
