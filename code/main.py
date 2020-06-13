@@ -75,6 +75,12 @@ print(pre_process.get_mean_dataset(X_train_gray))
 shufled_gray = pre_process.shuffle_dataset(X_train_gray,y_train)
 print (shufled_gray[0][0].shape)
 
+#REEMPLAZAMOS por los pasados a escala de grises
+X_train = X_train_gray
+X_valid = X_valid_gray
+X_test = X_test_gray
+
+
 """
 for i in range(8):
     idx = random.randint(0, len(X_train))
@@ -202,4 +208,6 @@ with tf.Session() as sess:
         
     saver.save(sess, './lenet')
     print("Model saved")
+
+
 
