@@ -7,6 +7,13 @@ import sklearn
 import tensorflow.compat.v1 as tf
 from tensorflow.keras.layers import Flatten
 from sklearn.utils import shuffle
+import os
+import glob
+import cv2
+import pandas as pd
+import matplotlib.image as mpimg
+from pandas import read_csv
+
 
 tf.disable_v2_behavior() 
 
@@ -20,6 +27,10 @@ with open(validation_file, mode='rb') as f:
     valid = pickle.load(f)
 with open(testing_file, mode='rb') as f:
     test = pickle.load(f)
+
+
+
+
 
 X_train, y_train = train['features'], train['labels']
 X_valid, y_valid = valid['features'], valid['labels']
@@ -42,7 +53,7 @@ for i in y_train:
 num_classes = len(classes)
 print("Cantidad de clases distintas: " + str(num_classes))
 #tambien se podria hacer asi -> print(len(np.unique(y_valid o y_train)))
-
+print(classes)
 #vemos una imagen en el indice que queremos
 #show_one_image(X_train, 2900)
 
@@ -199,7 +210,7 @@ with tf.Session() as sess:
         for offset in range(0, num_examples, BATCH_SIZE):
             end = offset + BATCH_SIZE
             batch_x, batch_y = X_train[offset:end], y_train[offset:end]
-            sess.run(training_operation, feed_dict={x: batch_x, y: batch_y, keep_prob: 1.0}) #PROBLEMA ACÁ "Cannot feed value of shape (128, 32, 32, 3) for Tensor 'Placeholder:0', which has shape '(?, 32, 32, 1)"
+            sess.run(training_operation, feed_dict={x: batch_x, y: batch_y, keep_prob: 1.0}) 
             
         validation_accuracy = evaluate(X_valid, y_valid)
         print("EPOCH {} ...".format(i+1))
@@ -211,3 +222,83 @@ with tf.Session() as sess:
 
 
 
+with tf.Session() as sess:
+    saver.restore(sess, tf.train.latest_checkpoint('.'))
+
+    test_accuracy = evaluate(X_test_gray, y_test)
+    print("Test Accuracy = {:.3f}".format(test_accuracy))
+
+
+#probamos ahora con nuevas imagenes
+label_signs = read_csv('code/signnames.csv').values[:, 1]  # fetch only sign names
+X_final_test = []
+X_final_test_name = []
+
+fig, axs = plt.subplots(2,3, figsize=(3, 2))
+fig.subplots_adjust(hspace = .2, wspace=.2)
+axs = axs.ravel()
+
+fig, axs = plt.subplots(2,3, figsize=(3, 2))
+fig.subplots_adjust(hspace = .2, wspace=.2)
+axs = axs.ravel()
+
+def pipeline(file):
+    global X_final_test
+    my_images = []
+    for i, img in enumerate(glob.glob(file)):
+        X_final_test_name.append(img)
+        image = cv2.imread(img)
+        print('Input Image '+ str(i) + ' ' + str(image.shape))
+        axs[i].axis('off')
+        axs[i].imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        my_images.append(image)
+    my_images = np.asarray(my_images)
+    my_images_gry = np.sum(my_images/3, axis=3, keepdims=True)
+    processed_image = (my_images_gry - 128)/128 
+    print('After Processing Image: ' + str(processed_image.shape))
+
+    return processed_image
+
+X_final_test = pipeline('/Users/matinsaurralde/Documents/Beca Tarpuy/Ingenia/3er_nivel/traffic_sign/code/test_images/*.png')
+X_final_graph = X_final_test
+
+softmax_logits = tf.nn.softmax(logits)
+top_k = tf.nn.top_k(softmax_logits, k=3)
+
+
+with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer())
+    saver = tf.train.import_meta_graph('./lenet.meta')
+    saver.restore(sess, "./lenet")
+    my_softmax_logits = sess.run(softmax_logits, feed_dict={x: X_final_test, keep_prob: 1.0})
+    my_top_k = sess.run(top_k, feed_dict={x: X_final_test, keep_prob: 1.0})
+
+    
+    fig, axs = plt.subplots(3,4, figsize=(12, 14))
+    fig.subplots_adjust(hspace = .4, wspace=.2)
+    axs = axs.ravel()
+
+    for i, image in enumerate(X_final_test):
+        axs[2*i].axis('off')
+        axs[2*i].imshow(image.reshape((32,32)))
+        axs[2*i].set_title('Image '+ str(i + 1))
+        pred_label = my_top_k[1][i][0]
+        index = np.argwhere(y_valid == pred_label)[0]
+        axs[2*i+1].axis('off')
+        axs[2*i+1].imshow(X_valid[index].squeeze(), cmap='gray')
+        axs[2*i+1].set_title('Predicted Label: {} \n {}'.format(pred_label, label_signs[pred_label]))
+
+with tf.Session() as sess:
+    saver.restore(sess, tf.train.latest_checkpoint('.'))
+    y_final_test = [14,1,11,34,3,18]
+    test_accuracy = evaluate(X_final_test, y_final_test)
+    print("Test Accuracy = {:.0f}%".format(test_accuracy*100))
+
+with tf.Session() as sess:
+    softmax = tf.nn.softmax(my_softmax_logits)
+    top5 = sess.run(tf.nn.top_k(softmax, k=5))
+    for x in range(len(X_final_test)):
+        print("File Name: [ '{0}' ]".format(X_final_test_name[x]))
+        for y in range(5):
+            print("{:s}: {:.8f}".format(label_signs[top5[1][x][y]], top5[0][x][y]))
+        print('\n')
