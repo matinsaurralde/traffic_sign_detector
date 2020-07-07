@@ -9,7 +9,7 @@ from tensorflow.keras.layers import Flatten
 from sklearn.utils import shuffle
 import os
 import glob
-import cv2
+from cv2 import cv2
 import pandas as pd
 import matplotlib.image as mpimg
 from pandas import read_csv
@@ -95,7 +95,6 @@ X_test = X_test_gray
 """
 for i in range(8):
     idx = random.randint(0, len(X_train))
-
     plt.figure(figsize=(1,1))
     plt.imshow(X_train[idx], cmap="gray")
     plt.show()
@@ -198,6 +197,8 @@ def evaluate(X_data, y_data):
         total_accuracy += (accuracy * len(batch_x))
     return total_accuracy / num_examples
 
+"""
+YA LO TENGO ENTRENADO => LO COMENTO PARA NO GASTAR TIEMPO CUANDO PRUEBO COSAS.
 
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
@@ -219,7 +220,7 @@ with tf.Session() as sess:
         
     saver.save(sess, './lenet')
     print("Model saved")
-
+"""
 
 
 with tf.Session() as sess:
@@ -228,6 +229,138 @@ with tf.Session() as sess:
     test_accuracy = evaluate(X_test_gray, y_test)
     print("Test Accuracy = {:.3f}".format(test_accuracy))
 
+
+
+##probamos con imagenes de internet
+
+def new_dataset():
+    # return array of images
+    dir='/Users/matinsaurralde/Downloads/Traffic-Sign-Classification-master/web-test-images/'
+
+    imagesList = os.listdir(dir)
+    dataset = []
+    labels = []
+    for i in imagesList:
+        tmp = os.path.splitext(os.path.basename(i))[0]
+        labels.append(int(tmp[0:2]))
+        img = cv2.imread(dir + i)
+        img = cv2.resize(img, (32, 32))
+        img = cv2.GaussianBlur(img,(3,3),0)
+        dataset.append(img)
+
+    return np.asarray(dataset), np.asarray(labels)
+
+def viz_newdataset(ind, num_images): #REVISAR POR QUE MUESTRA EN AZUL LAS IMAGENES
+    
+    dir='/Users/matinsaurralde/Downloads/Traffic-Sign-Classification-master/web-test-images/'
+    
+    imagesList = os.listdir(dir)
+    dataset = []
+    labels = []
+    for i in imagesList:
+        tmp = os.path.splitext(os.path.basename(i))[0]
+        labels.append(int(tmp[0:2]))
+        img = cv2.imread(dir + i)
+        img = cv2.resize(img, (32, 32))
+        dataset.append(img)
+        
+    new_data = np.asarray(dataset)
+    new_labels = np.asarray(labels)
+    
+    chosen_data = new_data[ind]
+    chosen_labels = new_labels[ind]
+
+    fig, ax = plt.subplots(ncols=num_images, figsize=(15, 5))
+    fig.tight_layout()
+    for k in range(num_images):
+        img = chosen_data[k].squeeze()
+        ax[k].imshow(img, cmap="gray")
+        ax[k].set_title('Label: '+ str(chosen_labels[k]))
+        ax[k].axis('off')
+    plt.show()
+        
+
+
+new_data, new_labels = new_dataset()
+new_data=pre_process.dataset2gray(new_data)
+new_data=pre_process.normalize_dataset(new_data)
+
+label_signs = read_csv('code/signnames.csv').values[:, 1]
+
+print("Traffic signs in New Dataset:",new_data.shape[0],"\n")
+for i in new_labels:
+    print("Label:",i,"->", label_signs[i]) # muestro los labels de cada uno de las imagenes nuevas
+
+
+
+
+num_examples=5 # max num_images
+ind = np.random.randint(0,new_data.shape[0]-1,(5))
+
+chosen_data = new_data[ind]
+chosen_labels = new_labels[ind]
+
+print("Five randomly chosen images in New Dataset:")
+viz_newdataset(ind,num_examples)
+
+
+# predecimos las imagenes nuevas
+selected_images = []
+top_softmax=5
+with tf.Session() as sess:
+    saver.restore(sess, "./lenet")
+    softmax = sess.run(tf.nn.softmax(logits), feed_dict={x:chosen_data, keep_prob:1})
+    maxsoftmax=sess.run(tf.nn.top_k(softmax, k=top_softmax))
+    
+pred=maxsoftmax[1]
+
+print("Detected traffic signs:\n")
+for i in pred[:,0]:
+    print("Label:",i,"->", label_signs[i])
+
+    selected_images.append(label_signs[i])
+
+
+#grafico de barras con top5 y top5 imagenes con sus probabilidades
+
+for j in range(num_examples):
+    fig, ax = plt.subplots(ncols=top_softmax, figsize=(10, 3))
+    fig.tight_layout()
+    for k in range(top_softmax):
+        ind = np.where(y_valid==pred[j,k])
+        image = X_valid[ind[0][10]].squeeze()
+        ax[k].imshow(image, cmap="gray")
+        ax[k].set_title('Softmax: {:.4f} %'.format(maxsoftmax[0][j,k]*100))#probabilidad de cada uno
+        ax[k].set_xlabel('Label: '+ str(pred[j,k]))#numeroo de cada uno#
+        ax[k].axis('off')
+    fig.suptitle('Traffic Sign # '+selected_images[j])
+    plt.show()
+
+for j in range(num_examples):
+    string_class =[]
+    value_class = []
+    for k in range(top_softmax):
+
+        string_class.append(label_signs[pred[j,k]]) 
+        value_class.append(maxsoftmax[0][j,k])
+        plt.bar(string_class, value_class)
+        plt.xticks(rotation = 80)
+    plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""
+CODIGO CON MUCHO ERROR EN EL TEST FINAL NO SE POR QUE, NO BORRAR
 
 #probamos ahora con nuevas imagenes
 label_signs = read_csv('code/signnames.csv').values[:, 1]  # fetch only sign names
@@ -302,3 +435,4 @@ with tf.Session() as sess:
         for y in range(5):
             print("{:s}: {:.8f}".format(label_signs[top5[1][x][y]], top5[0][x][y]))
         print('\n')
+"""
