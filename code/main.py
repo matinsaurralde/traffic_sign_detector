@@ -104,7 +104,7 @@ for i in range(8):
     plt.show()
 """
 
-EPOCHS = 15
+EPOCHS = 150
 BATCH_SIZE = 128
 rate = 0.001
 
@@ -197,9 +197,10 @@ def evaluate(X_data, y_data):
         total_accuracy += (accuracy * len(batch_x))
     return total_accuracy / num_examples
 
-"""
-YA LO TENGO ENTRENADO => LO COMENTO PARA NO GASTAR TIEMPO CUANDO PRUEBO COSAS.
 
+
+#YA LO TENGO ENTRENADO => LO COMENTO PARA NO GASTAR TIEMPO CUANDO PRUEBO COSAS.
+log_validation_accuracy =[]
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     num_examples = len(X_train)
@@ -216,11 +217,12 @@ with tf.Session() as sess:
         validation_accuracy = evaluate(X_valid, y_valid)
         print("EPOCH {} ...".format(i+1))
         print("Validation Accuracy = {:.3f}".format(validation_accuracy))
+        log_validation_accuracy.append(validation_accuracy)
         print()
         
     saver.save(sess, './lenet')
     print("Model saved")
-"""
+
 
 
 with tf.Session() as sess:
@@ -229,7 +231,19 @@ with tf.Session() as sess:
     test_accuracy = evaluate(X_test_gray, y_test)
     print("Test Accuracy = {:.3f}".format(test_accuracy))
 
+log_epochs = []
+for i in range (EPOCHS):
+    log_epochs.append(i+1)
 
+
+valid_accuracy_plt= plt.plot(log_epochs, log_validation_accuracy, 'b', label='Validation Accuracy')
+plt.xlabel('EPOCHS')
+plt.ylabel('ACCURACY')
+plt.title('ACCURACY vs. EPOCH')
+plt.show()
+
+
+"""
 
 ##probamos con imagenes de internet
 
@@ -249,6 +263,7 @@ def new_dataset():
         dataset.append(img)
 
     return np.asarray(dataset), np.asarray(labels)
+
 
 def viz_newdataset(ind, num_images): #REVISAR POR QUE MUESTRA EN AZUL LAS IMAGENES
     
@@ -313,7 +328,6 @@ with tf.Session() as sess:
     maxsoftmax=sess.run(tf.nn.top_k(softmax, k=top_softmax))
     
 pred=maxsoftmax[1]
-
 print("Detected traffic signs:\n")
 for i in pred[:,0]:
     print("Label:",i,"->", label_signs[i])
@@ -346,6 +360,9 @@ for j in range(num_examples):
         plt.bar(string_class, value_class)
         plt.xticks(rotation = 80)
     plt.show()
+"""
+
+
 
 
 
